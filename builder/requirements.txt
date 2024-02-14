@@ -1,0 +1,18 @@
+# Core Libraries
+fastapi[all]==0.94.0
+pydantic<2
+git+https://github.com/runpod/runpod-python.git
+
+# Image Processing Libraries
+rembg==2.0.54
+pillow=10.2.0
+
+# CLI and Development Utilities
+GitPython==3.1.37
+pyngrok==7.0.0
+
+# Web and Networking Libraries
+httpx==0.24.1
+httpcore==0.15
+inflection==0.5.1
+jsonmerge==1.8.0

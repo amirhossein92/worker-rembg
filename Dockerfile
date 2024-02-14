@@ -3,35 +3,36 @@
 # ---------------------------------------------------------------------------- #
 FROM python:3.10.9-slim as build_final_image
 
-ARG SHA=0dcdb080ae083de57084c38e93fb210534c5c693
-
 ENV DEBIAN_FRONTEND=noninteractive \
    PIP_PREFER_BINARY=1 \
    LD_PRELOAD=libtcmalloc.so \
-   ROOT=/rembg \
+   ROOT=/ \
    PYTHONUNBUFFERED=1
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+
+
 RUN apt-get update && \
    apt install -y \
-   fonts-dejavu-core rsync git jq moreutils aria2 wget libgoogle-perftools-dev procps libgl1 libglib2.0-0 && \
+   git && \
    apt-get autoremove -y && rm -rf /var/lib/apt/lists/* && apt-get clean -y
 
+# Install Python dependencies (Worker Template)
+COPY builder/requirements.txt /requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
-   git clone https://github.com/danielgatis/rembg.git && \
-   cd rembg && \
-   git reset --hard ${SHA}
+   pip install --upgrade pip && \
+   pip install --upgrade -r /requirements.txt --no-cache-dir && \
+   rm /requirements.txt
 
-WORKDIR /rembg
-
-RUN pip install --upgrade pip
-
-COPY . .
-
-RUN python -m pip install ".[cli]"
+COPY builder/download_model.py /download_model.py
 
 ADD src .
+
+# Cleanup section (Worker Template)
+# RUN apt-get autoremove -y && \
+#     apt-get clean -y && \
+#     rm -rf /var/lib/apt/lists/*
 
 # Set permissions and specify the command to run
 RUN chmod +x start.sh
