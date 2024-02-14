@@ -5,7 +5,7 @@ git+https://github.com/runpod/runpod-python.git
 
 # Image Processing Libraries
 rembg==2.0.54
-pillow=10.2.0
+pillow==10.2.0
 
 # CLI and Development Utilities
 GitPython==3.1.37
