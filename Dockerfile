@@ -11,8 +11,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-
-
 RUN apt-get update && \
    apt install -y \
    git && \
@@ -30,9 +28,11 @@ COPY builder/download_model.py /download_model.py
 ADD src .
 
 # Cleanup section (Worker Template)
-# RUN apt-get autoremove -y && \
-#     apt-get clean -y && \
-#     rm -rf /var/lib/apt/lists/*
+RUN apt-get autoremove -y && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python -u ./download_model.py
 
 # Set permissions and specify the command to run
 RUN chmod +x start.sh
