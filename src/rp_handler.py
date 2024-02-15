@@ -36,14 +36,22 @@ def handler(event):
     This is the handler function that will be called by the serverless.
     '''
 
-    data_uri_input = event['input']['data_uri']
-    input= open_image_from_data_uri(data_uri_input)
+    data_uri_inputs = event['input']['data_uris']
 
-    output_path = 'output.png'
-    output = remove(input)
-    output.save(output_path)
+    results = []
+    index = 0
+    for data_uri_input in data_uri_inputs:
+        input = open_image_from_data_uri(data_uri_input)
 
-    return image_to_base64(output_path)
+        output_path = f"output_{index}.png"
+        output = remove(input)
+        output.save(output_path)
+
+        result = image_to_base64(output_path)
+        results.append(result)
+        index = index+1
+
+    return results
 
 
 if __name__ == "__main__":
