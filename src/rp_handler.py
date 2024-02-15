@@ -1,40 +1,32 @@
-import time
-
 import runpod
-import requests
-from requests.adapters import HTTPAdapter, Retry
-import requests
-import urllib.parse
 import base64
 from rembg import remove
 from PIL import Image
 from io import BytesIO
-
-LOCAL_URL = "http://127.0.0.1:7000/api"
-
-automatic_session = requests.Session()
-retries = Retry(total=10, backoff_factor=0.1, status_forcelist=[502, 503, 504])
-automatic_session.mount('http://', HTTPAdapter(max_retries=retries))
-
+import re
 
 # ---------------------------------------------------------------------------- #
-#                              Automatic Functions                             #
+#                              Utility Functions                               #
 # ---------------------------------------------------------------------------- #
-def wait_for_service(url):
-    '''
-    Check if the service is ready to receive requests.
-    '''
-    while True:
-        try:
-            requests.get(url, timeout=120)
-            return
-        except requests.exceptions.RequestException:
-            print("Service not ready yet. Retrying...")
-        except Exception as err:
-            print("Error: ", err)
 
-        time.sleep(0.2)
-
+def image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        image_bytes = img_file.read()
+        base64_encoded = base64.b64encode(image_bytes)
+        base64_string = base64_encoded.decode('utf-8')
+        return base64_string
+    
+def open_image_from_data_uri(data_uri):
+    # Extract the image data from the data URI
+    image_data = re.sub('^data:image/.+;base64,', '', data_uri)
+    
+    # Decode the base64 encoded image data
+    image_bytes = BytesIO(base64.b64decode(image_data))
+    
+    # Open the image using Pillow
+    image = Image.open(image_bytes)
+    
+    return image
 
 # ---------------------------------------------------------------------------- #
 #                                RunPod Handler                                #
@@ -44,26 +36,17 @@ def handler(event):
     This is the handler function that will be called by the serverless.
     '''
 
-    base64Input = event['input']['src']
+    data_uri_input = event['input']['data_uri']
+    input= open_image_from_data_uri(data_uri_input)
 
     output_path = 'output.png'
-    base64Input = base64Input.replace('data:image/png;base64,', '').replace('data:image/jpeg;base64,', '')
-
-    input= Image.open(BytesIO(base64.b64decode(base64Input)))
-
     output = remove(input)
     output.save(output_path)
 
-    outputImage= Image.open(output_path)
-
-    base64_output = base64.b64encode(outputImage.tobytes()).decode('utf-8')
-
-    return base64_output
+    return image_to_base64(output_path)
 
 
 if __name__ == "__main__":
-    # wait_for_service(url=f'{LOCAL_URL}')
-
     print("rembg API Service is ready. Starting RunPod...")
 
     runpod.serverless.start({"handler": handler})
